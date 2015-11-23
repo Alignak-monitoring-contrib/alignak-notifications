@@ -30,55 +30,17 @@ To install the package from the source files:
 Documentation
 ----------------------------------------
 
-Configuration
-~~~~~~~~~~~~~~~~~~~~~~~
+This pack embeds several scripts that can be used to send notifications from Alignak:
 
-**Note**: this pack embeds the ``check_nrpe`` binary from the Nagios plugins, this to avoid to have a complete Nagios installation on your Alignak server!
-
-The embedded version of ``check_nrpe`` is only compatible with Linux distros. For Unix (FreeBSD), you can simply install the NRPE plugin:
-::
-   # Simple NRPE
-   pkg install nrpe
-
-   # NRPE with SSL
-   pkg install nrpe-ssl
-
-If you wish to use the Nagios ``check_nrpe`` plugin, you must install from your system repository:
-::
-   # Install local NRPE plugin
-   apt-get install nagios-nrpe-plugin
-   # Note: This installs all the Nagios stuff on your machine ...
-
-
-Prepare monitored hosts
-~~~~~~~~~~~~~~~~~~~~~~~
-Some operations are necessary on the monitored hosts if NRPE remote access is not yet activated.
-::
-   # Install local NRPE server
-   su -
-   apt-get update
-   apt-get install nagios-nrpe-server
-   apt-get install nagios-plugins
-
-   # Allow Alignak as a remote host
-   vi /etc/nagios/nrpe.cfg
-   =>
-      allowed_hosts = X.X.X.X
-
-   # Restart NRPE daemon
-   /etc/init.d/nagios-nrpe-server start
-
-Test remote access with the plugins files:
-::
-   /usr/local/var/lib/alignak/libexec/check_nrpe -H 127.0.0.1 -t 9 -u -c check_load
+- simple printf sent to sendmail
+- python script to send HTML mail
+- python script to send XMPP notifications
 
 
 Alignak configuration
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-You simply have to tag the concerned hosts with the template ``linux-nrpe``.
-
-The main ``linux-nrpe`` template only declares the default NRPE commands configured on the server. You can easily adapt the configuration defined in the ``services.cfg`` and ``commands.cfg.parse`` files.
+... TO BE COMPLETED ...
 
 
 Bugs, issues and contributing
