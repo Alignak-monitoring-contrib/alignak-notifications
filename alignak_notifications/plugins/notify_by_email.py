@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#-*-coding:utf-8-*-
+# -*-coding:utf-8-*-
 # Copyright (C) 2015: Frédéric MOHIER
 #
 # This file incorporates work covered by the following copyright and
@@ -54,6 +54,7 @@ def setup_logging():
     else:
         logging.basicConfig(level=log_level, format='%(asctime)s:%(levelname)s: %(message)s')
 
+# Get WebUI information
 def get_webui_logo():
     company_logo=''
 
@@ -106,7 +107,7 @@ def get_webui_port():
 
     logging.debug('Webui file handler: %s' % (webui_config_fh))
     webui_config = webui_config_fh.readlines()
-    logging.debug('Webui config: %s' % (webui_config))
+    # logging.debug('Webui config: %s' % (webui_config))
     for line in webui_config:
         if 'port' in line:
             port = line.rsplit('port')[1].strip()
@@ -341,7 +342,7 @@ if __name__ == "__main__":
     group_host_service.add_option('-c', '--commonmacros', dest='commonmacros',
                       help='Double comma separated macros in this order : "NOTIFICATIONTYPE$,,$HOSTNAME$,,$HOSTADDRESS$,,$LONGDATETIME$".')
     group_host_service.add_option('-o', '--objectmacros', dest='objectmacros',
-                      help='Double comma separated object macros in this order : "$SERVICEDESC$,,$SERVICESTATE$,,$SERVICEOUTPUT$,,$SERVICEDURATION$" for a service object and "$HOSTSTATE$,,$HOSTDURATION$" with host object')
+                      help='Double comma separated object macros in this order : "$SERVICEDESC$,,$SERVICESTATE$,,$SERVICEOUTPUT$,,$SERVICEDURATION$" for a service object and "$HOSTSTATE$,,$HOSTDURATION$" for an host object')
 
     # Details options
     group_details.add_option('-d', '--detailleddesc', dest='detailleddesc',
@@ -450,6 +451,8 @@ if __name__ == "__main__":
             'Notification type': 'TEST',
             'Date': 'Now, test'
         }
+    else:
+        host_service_var.update(notification_object_var[opts.notification_object])
 
     logging.debug('notification_object_var: %s', notification_object_var)
     logging.debug('host_service_var: %s', host_service_var)
