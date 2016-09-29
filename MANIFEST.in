@@ -1,3 +1,0 @@
-include README.rst LICENSE AUTHORS
-recursive-include alignak_notifications *.*
-global-exclude *.pyc
