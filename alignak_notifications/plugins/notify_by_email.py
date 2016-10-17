@@ -35,6 +35,7 @@ from optparse import OptionParser, OptionGroup
 from email.mime.text import MIMEText
 from email.MIMEImage import MIMEImage
 from email.mime.multipart import MIMEMultipart
+from email.utils import formatdate
 
 # Global var
 image_dir = '/var/lib/shinken/share/images'
@@ -188,6 +189,7 @@ def create_mail(format):
     msg['To'] = opts.receivers
     logging.debug('Subject: %s' % (opts.prefix + get_mail_subject(opts.notification_object)))
     msg['Subject'] = opts.prefix + get_mail_subject(opts.notification_object)
+    msg['Date'] = formatdate()
 
     return msg
 
@@ -271,10 +273,10 @@ th.customer {width: 600px; background-color: #004488; color: #ffffff;}\r
     for k,v in sorted(host_service_var.iteritems()):
         logging.debug('type %s : %s' % (k, type(v)))
         if odd:
-            html_content.append('<tr><th class="odd">' + k + '</th><td class="odd">' + v + '</td></tr>')
+            html_content.append('<tr><th class="odd">' + k + ': </th><td class="odd">' + v + '</td></tr>')
             odd=False
         else:
-            html_content.append('<tr><th class="even">' + k + '</th><td class="even">' + v + '</td></tr>')
+            html_content.append('<tr><th class="even">' + k + ': </th><td class="even">' + v + '</td></tr>')
             odd=True
 
     html_content.append('</table>')
@@ -333,6 +335,10 @@ if __name__ == "__main__":
                       help='Sender email address, default is system user: %s' % '@'.join((getpass.getuser(), socket.gethostname())))
     group_general.add_option('-S', '--SMTP', dest='smtp', default='localhost',
                       help='Target SMTP hostname. None for just a sendmail lanch. Default: localhost')
+    group_general.add_option('-L', '--LOGIN', dest='smtplogin', default='',
+                      help='Login for SMTP. None for not need login. Default: ')
+    group_general.add_option('-P', '--PASSWORD', dest='smtppassword', default='',
+                      help='Password for SMTP. None for not need password. Default: ')
     group_general.add_option('-p', '--prefix', dest='prefix', default='',
                       help='Mail subject prefix. Default is no prefix')
 
@@ -488,6 +494,11 @@ if __name__ == "__main__":
     try:
         smtp = smtplib.SMTP(opts.smtp)
         logging.debug('Send the mail')
+
+        logging.debug('Login')
+        if opts.smtplogin != '':
+            smtp.login(opts.smtplogin, opts.smtppassword)
+
         smtp.sendmail(get_user(), receivers, mail.as_string())
         logging.info("Mail sent successfuly")
         # Use SMTP or sendmail to send the mail ...
@@ -495,7 +506,7 @@ if __name__ == "__main__":
             logging.debug('Connecting to %s smtp server' % (opts.smtp))
             smtp = smtplib.SMTP(opts.smtp)
             logging.debug('Send the mail')
-            smtp.sendmail(opts.smtpfrom, receivers, mail.as_string())
+            smtp.sendmail(opts.sender, receivers, mail.as_string())
             logging.info("Mail sent successfuly")
         else:
             sendmail = '/usr/sbin/sendmail'
