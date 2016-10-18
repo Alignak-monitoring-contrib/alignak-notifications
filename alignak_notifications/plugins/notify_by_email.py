@@ -235,60 +235,168 @@ def add_image2mail(img, mail):
     return mail
 
 def create_html_message(msg):
+
+    # default state color => OK / UP
+    state_color = '#27ae60'
+    if opts.notification_object == 'service':
+        if notification_object_var['service']['Service state'] == 'WARNING':
+            state_color = '#e67e22'
+        elif notification_object_var['service']['Service state'] == 'CRITICAL':
+            state_color = '#e74c3c'
+        elif notification_object_var['service']['Service state'] == 'UNKNOWN':
+            state_color = '#2980b9'
+        elif notification_object_var['service']['Service state'] == 'ACKNOWLEDGE':
+            state_color = '#95a5a6'
+        elif notification_object_var['service']['Service state'] == 'DOWNTIME':
+            state_color = '#9b59b6'
+    else:
+        if notification_object_var['host']['Host state'] == 'DOWN':
+            state_color = '#e74c3c'
+        elif notification_object_var['host']['Host state'] == 'UNREACHABLE':
+            state_color = '#e67e22'
+        elif notification_object_var['host']['Host state'] == 'ACKNOWLEDGE':
+            state_color = '#95a5a6'
+        elif notification_object_var['host']['Host state'] == 'DOWNTIME':
+            state_color = '#9b59b6'
+
     # Header part
     html_content = ['''
 <html>\r
 <head>\r
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">\r
-<style type="text/css">\r
-body {text-align: center; font-family: Verdana, sans-serif; font-size: 10pt;}\r
-img.logo {float: left; margin: 10px 10px 10px; vertical-align: middle}\r
-span {font-family: Verdana, sans-serif; font-size: 12pt;}\r
-table {text-align:center; margin-left: auto; margin-right: auto;}\r
-th {white-space: nowrap;}\r
-th.even {background-color: #D9D9D9;}\r
-td.even {background-color: #F2F2F2;}\r
-th.odd {background-color: #F2F2F2;}\r
-td.odd {background-color: #FFFFFF;}\r
-th,td {font-family: Verdana, sans-serif; font-size: 10pt; text-align:left;}\r
-th.customer {width: 600px; background-color: #004488; color: #ffffff;}\r
-</style>\r
 </head>\r
-<body>\r'''
-    ]
+<body style="font-family: Helvetica;">\r''' ]
 
-    full_logo_path = get_webui_logo()
-    if full_logo_path:
-        msg = add_image2mail(full_logo_path, msg)
-        html_content.append('<img src="cid:customer_logo">')
-        html_content.append('<table width="600px"><tr><th colspan="2"><span>%s</span></th></tr>' % mail_welcome)
+    # css
+    css_table = 'border-collapse: collapse;width: 650px;'
+    css_table_title = 'border-radius: 6px;background-color: #0e7099;color: white;height: 60px;'
+    css_state = 'height: 30px;background-color: %s;text-align: center;' % state_color
+    css_point = 'height: 20px;width: 20px;border-radius: 100%%;background-color: %s;' % state_color
+    css_past = 'display: block;width: 100%%;height: 1px;border: 0;border-top: 2px solid %s;margin: 0;padding: 0;' % state_color
+    css_future = 'display: block;width: 100%;height: 1px;border: 0;border-top: 2px dotted #ccc;margin: 1em 0;padding: 0;'
+    css_point_title = 'text-align: center;font-size: 12px;color: #ccc;'
+    css_length = 'text-align: center;font-size: 12px;color: %s;' % state_color
+    css_end = 'width: 650px;display: block;height: 1px;border: 0;border-top: 1px solid #0e7099;margin: 1em 0;padding: 0;'
+    css_footer = 'display: block;font-size: 11px;color: #0e7099;'
+    css_separator = 'display: block;width: 180px;height: 2px;border: 0;border-top: 2px solid #ccc;margin: 10;padding: 10;'
+
+
+    # Head of the email
+    html_content.append('<table style="%s %s">' % (css_table, css_table_title))
+    html_content.append('<tr style="height: 60px">')
+    html_content.append('<td rowspan="2" style="width:160px">')
+    html_content.append('<img alt="Alignak" title="Alignak" width="120" height="35" src="data:image/png;base64,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"/>')
+    html_content.append('</td>')
+    html_content.append('<td style="width:50px;height: 30px;">')
+    html_content.append('<b>Host</b>')
+    html_content.append('</td>')
+    html_content.append('<td>')
+    html_content.append(host_service_var['Hostname'])
+    html_content.append('</td>')
+    html_content.append('</tr>')
+
+    html_content.append('<tr>')
+    html_content.append('<td style="height: 30px;">')
+    if opts.notification_object == 'service':
+        html_content.append('<b>Service</b>')
+    html_content.append('</td>')
+    html_content.append('<td>')
+    if opts.notification_object == 'service':
+        html_content.append(notification_object_var['service']['Service description'])
+    html_content.append('</td>')
+    html_content.append('</tr>')
+
+    # State
+    html_content.append('<tr style="height: 30px">')
+    html_content.append('<td colspan="3" style="%s"><b>' % css_state)
+    if opts.notification_object == 'service':
+        html_content.append(notification_object_var['service']['Service state'])
     else:
-        html_content.append('<table width="600px"><tr><th colspan="2"><span>%s</span></th></tr>' %  mail_welcome)
-
-    # Update host_service_var dict with appropriate dict depending which is object notified
-    # then we can fill mail content.
-    odd=True
-    get_content_to_send()
-    logging.debug('Content to send: %s' % host_service_var)
-    for k,v in sorted(host_service_var.iteritems()):
-        logging.debug('type %s : %s' % (k, type(v)))
-        if odd:
-            html_content.append('<tr><th class="odd">' + k + ': </th><td class="odd">' + v + '</td></tr>')
-            odd=False
-        else:
-            html_content.append('<tr><th class="even">' + k + ': </th><td class="even">' + v + '</td></tr>')
-            odd=True
+        html_content.append(notification_object_var['host']['Host state'])
+    html_content.append('</b></td>')
+    html_content.append('</tr>')
 
     html_content.append('</table>')
 
-    # Get url and add it in footer
-    url = get_webui_url()
-    logging.debug('Grabbed WebUI URL : %s' % url)
+    # Second part with output of check
+    html_content.append('<table style="%s">' % css_table)
+    html_content.append('<tr style="height: 100px;">')
+    html_content.append('<td style="width: 20px;">')
+    html_content.append('</td>')
+    html_content.append('<td style="width: 120px;">')
+    html_content.append('<b>Message</b>')
+    html_content.append('</td>')
+    html_content.append('<td style="width: 510">')
+    if opts.notification_object == 'service':
+        html_content.append(notification_object_var['service']['Service output'])
+    html_content.append('</td>')
+    html_content.append('</tr>')
+    html_content.append('</table>')
 
-    if url != None:
-        html_content.append('More details on <a href="%s">WebUI </a>' % (url))
+
+    # separator with notification type
+    html_content.append('<table style="%s">' % css_table)
+    html_content.append('<tr>')
+    html_content.append('<td style="width: 200px;">')
+    html_content.append('<hr style="%s"/>' % css_separator)
+    html_content.append('</td>')
+    html_content.append('<td style="width: 250px;text-align: center;">')
+    html_content.append('<b>Notification type</b> ')
+    html_content.append(host_service_var['Notification type'])
+    html_content.append('</td>')
+    html_content.append('<td style="width: 200px;">')
+    html_content.append('<hr style="%s"/>' % css_separator)
+    html_content.append('</td>')
+    html_content.append('</tr>')
+    html_content.append('</table>')
+    html_content.append('<br/>')
+    html_content.append('<br/>')
+    html_content.append('<br/>')
+
+    # timeline
+    html_content.append('<table style="%s">' % css_table)
+    html_content.append('<tr>')
+    html_content.append('<td style="%swidth: 70px;">' % css_point_title)
+    html_content.append(host_service_var['Date'])
+    html_content.append('</td>')
+    html_content.append('<td style="%swidth: 380px;">' % css_length)
+    if opts.notification_object == 'service':
+        html_content.append(notification_object_var['service']['Service state duration'])
+    else:
+        html_content.append(notification_object_var['host']['Host state duration'])
+    html_content.append('</td>')
+    html_content.append('<td style="">')
+    html_content.append('</td>')
+    html_content.append('</tr>')
+    html_content.append('</table>')
+
+    html_content.append('<table style="%s">' % css_table)
+    html_content.append('<tr>')
+    html_content.append('<td style="width: 20px;">')
+    html_content.append('</td>')
+    html_content.append('<td style="width: 20px;padding:0;margin:0;">')
+    html_content.append('<div style="%s"></div>' % css_point)
+    html_content.append('</td>')
+    html_content.append('<td style="width: 430px;padding:0;margin:0;">')
+    html_content.append('<hr style="%s"/>' % css_past)
+    html_content.append('</td>')
+    html_content.append('<td style="padding:0;margin:0;">')
+    html_content.append('<hr style="%s"/>' % css_future)
+    html_content.append('</td>')
+    html_content.append('</tr>')
+    html_content.append('</table>')
+
+    html_content.append('<br/><br/><br/>')
+
+    # footer
+    html_content.append('<hr style="%s"/>' % css_end)
+    html_content.append('<div style="%s">' % css_footer)
+    html_content.append('This email was generated by Alignak on ')
+    html_content.append(formatdate())
+    html_content.append('</div>')
 
     html_content.append('</body></html>')
+
 
     # Make final string var to send and encode it to stdout encoding
     # avoiding decoding error.
