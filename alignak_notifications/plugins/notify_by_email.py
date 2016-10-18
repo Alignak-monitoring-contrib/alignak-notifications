@@ -45,6 +45,7 @@ webui_config_file = '/etc/shinken/modules/webui.cfg'
 webui2_config_file = '/etc/shinken/modules/webui2.cfg'
 webui2_image_dir = '/var/lib/shinken/share/photos'
 
+
 # Set up root logging
 def setup_logging():
     log_level = logging.INFO
@@ -55,9 +56,10 @@ def setup_logging():
     else:
         logging.basicConfig(level=log_level, format='%(asctime)s:%(levelname)s: %(message)s')
 
+
 # Get WebUI information
 def get_webui_logo():
-    company_logo=''
+    company_logo = ''
 
     try:
         webui_config_fh = open(webui2_config_file)
@@ -87,8 +89,9 @@ def get_webui_logo():
 
     return company_logo
 
+
 def get_webui_port():
-    port=''
+    port = ''
 
     try:
         webui_config_fh = open(webui2_config_file)
@@ -114,6 +117,7 @@ def get_webui_port():
             port = line.rsplit('port')[1].strip()
     return port
 
+
 def get_webui_url():
     if opts.webui:
         hostname = socket.gethostname()
@@ -132,6 +136,7 @@ def get_webui_url():
 
         return url
 
+
 # Get current process user that will be the mail sender
 def get_user():
     if opts.sender:
@@ -144,7 +149,8 @@ def get_user():
 # Common mail functions and var
 #############################################################################
 mail_welcome = 'Alignak Monitoring System Notification'
-mail_format = { 'html': MIMEMultipart(), 'txt': MIMEMultipart('alternative') }
+mail_format = {'html': MIMEMultipart(), 'txt': MIMEMultipart('alternative')}
+
 
 # Construct mail subject field based on which object we notify
 def get_mail_subject(object):
@@ -164,8 +170,10 @@ def get_mail_subject(object):
 
     return mail_subject[object]
 
+
 def get_content_to_send():
     host_service_var.update(notification_object_var[opts.notification_object])
+
 
 # Translate a comma separated list of mail recipient into a python list
 def make_receivers_list(receivers):
@@ -175,6 +183,7 @@ def make_receivers_list(receivers):
         ret = [receivers]
 
     return ret
+
 
 # This just create mail skeleton and doesn't have any content.
 # But can be used to add multiple and differents contents.
@@ -193,6 +202,7 @@ def create_mail(format):
 
     return msg
 
+
 #############################################################################
 # Txt creation lair
 #############################################################################
@@ -200,26 +210,25 @@ def create_txt_message(msg):
     txt_content = [mail_welcome]
 
     get_content_to_send()
-    for k,v in sorted(host_service_var.iteritems()):
+    for k, v in sorted(host_service_var.iteritems()):
         txt_content.append(k + ': ' + v)
-
 
     # Add url at the end
     url = get_webui_url()
     logging.debug('Grabbed WebUI URL : %s' % url)
-    if url != None:
+    if url is not None:
         txt_content.append('More details on : %s' % url)
 
     txt_content = '\r\n'.join(txt_content)
 
     msgText = MIMEText(txt_content, 'text')
     msg.attach(msgText)
-
     return msg
 
 #############################################################################
 # Html creation lair
 #############################################################################
+
 
 # Process customer logo into mail message so it can be referenced in it later
 def add_image2mail(img, mail):
@@ -233,6 +242,7 @@ def add_image2mail(img, mail):
 
     fp.close()
     return mail
+
 
 def create_html_message(msg):
 
@@ -265,7 +275,7 @@ def create_html_message(msg):
 <head>\r
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">\r
 </head>\r
-<body style="font-family: Helvetica;">\r''' ]
+<body style="font-family: Helvetica;">\r''']
 
     # css
     css_table = 'border-collapse: collapse;width: 650px;'
@@ -276,11 +286,11 @@ def create_html_message(msg):
     css_future = 'display: block;width: 100%;height: 1px;border: 0;border-top: 2px dotted #ccc;margin: 1em 0;padding: 0;'
     css_point_title = 'text-align: center;font-size: 12px;color: #acacac;'
     css_length = 'text-align: center;font-size: 12px;color: %s;' % state_color
-    css_end = 'width: 650px;display: block;height: 1px;border: 0;border-top: 1px solid #0e7099;margin: 1em 0;padding: 0;'
-    css_footer = 'display: block;font-size: 11px;color: #0e7099;height: 40px;'
+    css_end = 'width: 628px;display: block;height: 1px;border: 0;border-top: 1px solid #0e7099;'
+    css_footer = 'padding-left: 10px;display: block;font-size: 11px;color: #0e7099;height: 40px;'
     css_separator = 'display: block;width: 180px;height: 2px;border: 0;border-top: 2px solid #ccc;margin: 10;padding: 10;'
+    css_background = 'background-color: #f8f8f8;width: 648px;border-left: 1px solid #ccc;border-right: 1px solid #ccc;border-bottom: 1px solid #ccc;border-bottom-left-radius: 6px;border-bottom-right-radius: 6px;'
 
-    html_content.append('<div style="background-color: #f8f8f8;width: 650px;">')
 
     # Head of the email
     html_content.append('<table style="%s %s">' % (css_table, css_table_title))
@@ -320,6 +330,7 @@ def create_html_message(msg):
     html_content.append('</table>')
 
     # Second part with output of check
+    html_content.append('<div style="%s">' % css_background)
     html_content.append('<table style="%s">' % css_table)
     html_content.append('<tr style="height: 100px;">')
     html_content.append('<td style="width: 20px;">')
@@ -333,7 +344,6 @@ def create_html_message(msg):
     html_content.append('</td>')
     html_content.append('</tr>')
     html_content.append('</table>')
-
 
     # separator with notification type
     html_content.append('<table style="%s">' % css_table)
@@ -400,7 +410,6 @@ def create_html_message(msg):
 
     html_content.append('</body></html>')
 
-
     # Make final string var to send and encode it to stdout encoding
     # avoiding decoding error.
     html_content = '\r\n'.join(html_content)
@@ -409,7 +418,6 @@ def create_html_message(msg):
     except UnicodeDecodeError as e:
         logging.debug('Content is Unicode encoded.')
         html_msg = html_content.decode('utf-8').encode(sys.stdout.encoding)
-
 
     logging.debug('HTML string: %s' % html_msg)
 
@@ -493,7 +501,7 @@ if __name__ == "__main__":
             'Notification type': os.getenv('NAGIOS_NOTIFICATIONTYPE'),
             'Hostname': os.getenv('NAGIOS_HOSTNAME'),
             'Host address': os.getenv('NAGIOS_HOSTADDRESS'),
-            'Date' : os.getenv('NAGIOS_LONGDATETIME')
+            'Date': os.getenv('NAGIOS_LONGDATETIME')
         }
     else:
         macros = opts.commonmacros.split(',,')
@@ -501,9 +509,8 @@ if __name__ == "__main__":
             'Notification type': macros[0],
             'Hostname': macros[1],
             'Host address': macros[2],
-            'Date' : macros[3]
+            'Date': macros[3]
         }
-
     if opts.objectmacros == None:
         notification_object_var = {
             'service': {
@@ -540,7 +547,8 @@ if __name__ == "__main__":
                     'Service state': '',
                     'Service output': '',
                     'Service state duration': ''
-                },'host': {
+                 },
+                'host': {
                     'Host state': macros[0],
                     'Host state duration': macros[1]
                 }
@@ -603,27 +611,20 @@ if __name__ == "__main__":
         mail = create_txt_message(mail)
 
     try:
-        smtp = smtplib.SMTP(opts.smtp)
-        logging.debug('Send the mail')
-
-        logging.debug('Login')
-        if opts.smtplogin != '':
-            smtp.login(opts.smtplogin, opts.smtppassword)
-
-        smtp.sendmail(get_user(), receivers, mail.as_string())
-        logging.info("Mail sent successfuly")
         # Use SMTP or sendmail to send the mail ...
         if opts.smtp != 'None':
             logging.debug('Connecting to %s smtp server' % (opts.smtp))
             smtp = smtplib.SMTP(opts.smtp)
+            if opts.smtplogin != '':
+                smtp.login(opts.smtplogin, opts.smtppassword)
             logging.debug('Send the mail')
-            smtp.sendmail(opts.sender, receivers, mail.as_string())
+            smtp.sendmail(get_user(), receivers, mail.as_string())
             logging.info("Mail sent successfuly")
         else:
             sendmail = '/usr/sbin/sendmail'
             logging.debug('Send the mail')
             p = os.popen('%s -t' % sendmail, 'w')
-            logging.debug('Final mail : ' + mail.as_string())
+            logging.debug('Final mail: ' + mail.as_string())
             logging.debug('Send the mail')
             p.write(mail.as_string())
             status = p.close()
