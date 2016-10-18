@@ -285,7 +285,7 @@ def create_html_message(msg):
     css_past = 'display: block;width: 100%%;height: 1px;border: 0;border-top: 2px solid %s;margin: 0;padding: 0;' % state_color
     css_future = 'display: block;width: 100%;height: 1px;border: 0;border-top: 2px dotted #ccc;margin: 1em 0;padding: 0;'
     css_point_title = 'text-align: center;font-size: 12px;color: #acacac;'
-    css_length = 'text-align: center;font-size: 12px;color: %s;' % state_color
+    css_length = 'text-align: center;vertical-align: bottom;font-size: 12px;color: %s;' % state_color
     css_end = 'width: 628px;display: block;height: 1px;border: 0;border-top: 1px solid #0e7099;'
     css_footer = 'padding-left: 10px;display: block;font-size: 11px;color: #0e7099;height: 40px;'
     css_separator = 'display: block;width: 180px;height: 2px;border: 0;border-top: 2px solid #ccc;margin: 10;padding: 10;'
