@@ -35,6 +35,7 @@ from optparse import OptionParser, OptionGroup
 from email.mime.text import MIMEText
 from email.MIMEImage import MIMEImage
 from email.mime.multipart import MIMEMultipart
+from email.utils import formatdate
 
 # Global var
 image_dir = '/var/lib/shinken/share/images'
@@ -188,6 +189,7 @@ def create_mail(format):
     msg['To'] = opts.receivers
     logging.debug('Subject: %s' % (opts.prefix + get_mail_subject(opts.notification_object)))
     msg['Subject'] = opts.prefix + get_mail_subject(opts.notification_object)
+    msg['Date'] = formatdate()
 
     return msg
 
@@ -233,60 +235,171 @@ def add_image2mail(img, mail):
     return mail
 
 def create_html_message(msg):
+
+    # default state color => OK / UP
+    state_color = '#27ae60'
+    if opts.notification_object == 'service':
+        if notification_object_var['service']['Service state'] == 'WARNING':
+            state_color = '#e67e22'
+        elif notification_object_var['service']['Service state'] == 'CRITICAL':
+            state_color = '#e74c3c'
+        elif notification_object_var['service']['Service state'] == 'UNKNOWN':
+            state_color = '#2980b9'
+        elif notification_object_var['service']['Service state'] == 'ACKNOWLEDGE':
+            state_color = '#95a5a6'
+        elif notification_object_var['service']['Service state'] == 'DOWNTIME':
+            state_color = '#9b59b6'
+    else:
+        if notification_object_var['host']['Host state'] == 'DOWN':
+            state_color = '#e74c3c'
+        elif notification_object_var['host']['Host state'] == 'UNREACHABLE':
+            state_color = '#e67e22'
+        elif notification_object_var['host']['Host state'] == 'ACKNOWLEDGE':
+            state_color = '#95a5a6'
+        elif notification_object_var['host']['Host state'] == 'DOWNTIME':
+            state_color = '#9b59b6'
+
     # Header part
     html_content = ['''
 <html>\r
 <head>\r
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">\r
-<style type="text/css">\r
-body {text-align: center; font-family: Verdana, sans-serif; font-size: 10pt;}\r
-img.logo {float: left; margin: 10px 10px 10px; vertical-align: middle}\r
-span {font-family: Verdana, sans-serif; font-size: 12pt;}\r
-table {text-align:center; margin-left: auto; margin-right: auto;}\r
-th {white-space: nowrap;}\r
-th.even {background-color: #D9D9D9;}\r
-td.even {background-color: #F2F2F2;}\r
-th.odd {background-color: #F2F2F2;}\r
-td.odd {background-color: #FFFFFF;}\r
-th,td {font-family: Verdana, sans-serif; font-size: 10pt; text-align:left;}\r
-th.customer {width: 600px; background-color: #004488; color: #ffffff;}\r
-</style>\r
 </head>\r
-<body>\r'''
-    ]
+<body style="font-family: Helvetica;">\r''' ]
 
-    full_logo_path = get_webui_logo()
-    if full_logo_path:
-        msg = add_image2mail(full_logo_path, msg)
-        html_content.append('<img src="cid:customer_logo">')
-        html_content.append('<table width="600px"><tr><th colspan="2"><span>%s</span></th></tr>' % mail_welcome)
+    # css
+    css_table = 'border-collapse: collapse;width: 650px;'
+    css_table_title = 'border-radius: 6px;background-color: #0e7099;color: white;height: 60px;'
+    css_state = 'height: 30px;background-color: %s;text-align: center;' % state_color
+    css_point = 'height: 20px;width: 20px;border-radius: 100%%;background-color: %s;' % state_color
+    css_past = 'display: block;width: 100%%;height: 1px;border: 0;border-top: 2px solid %s;margin: 0;padding: 0;' % state_color
+    css_future = 'display: block;width: 100%;height: 1px;border: 0;border-top: 2px dotted #ccc;margin: 1em 0;padding: 0;'
+    css_point_title = 'text-align: center;font-size: 12px;color: #acacac;'
+    css_length = 'text-align: center;font-size: 12px;color: %s;' % state_color
+    css_end = 'width: 650px;display: block;height: 1px;border: 0;border-top: 1px solid #0e7099;margin: 1em 0;padding: 0;'
+    css_footer = 'display: block;font-size: 11px;color: #0e7099;height: 40px;'
+    css_separator = 'display: block;width: 180px;height: 2px;border: 0;border-top: 2px solid #ccc;margin: 10;padding: 10;'
+
+    html_content.append('<div style="background-color: #f8f8f8;width: 650px;">')
+
+    # Head of the email
+    html_content.append('<table style="%s %s">' % (css_table, css_table_title))
+    html_content.append('<tr style="height: 60px">')
+    html_content.append('<td rowspan="2" style="width:160px">')
+    html_content.append('<img alt="Alignak" title="Alignak" width="120" height="35" src="https://raw.githubusercontent.com/Alignak-monitoring-contrib/alignak-notifications/master/alignak.png"/>')
+    html_content.append('</td>')
+    html_content.append('<td style="width:50px;height: 30px;">')
+    html_content.append('<b>Host</b>')
+    html_content.append('</td>')
+    html_content.append('<td>')
+    html_content.append(host_service_var['Hostname'])
+    html_content.append('</td>')
+    html_content.append('</tr>')
+
+    html_content.append('<tr>')
+    html_content.append('<td style="height: 30px;">')
+    if opts.notification_object == 'service':
+        html_content.append('<b>Service</b>')
+    html_content.append('</td>')
+    html_content.append('<td>')
+    if opts.notification_object == 'service':
+        html_content.append(notification_object_var['service']['Service description'])
+    html_content.append('</td>')
+    html_content.append('</tr>')
+
+    # State
+    html_content.append('<tr style="height: 30px">')
+    html_content.append('<td colspan="3" style="%s"><b>' % css_state)
+    if opts.notification_object == 'service':
+        html_content.append(notification_object_var['service']['Service state'])
     else:
-        html_content.append('<table width="600px"><tr><th colspan="2"><span>%s</span></th></tr>' %  mail_welcome)
-
-    # Update host_service_var dict with appropriate dict depending which is object notified
-    # then we can fill mail content.
-    odd=True
-    get_content_to_send()
-    logging.debug('Content to send: %s' % host_service_var)
-    for k,v in sorted(host_service_var.iteritems()):
-        logging.debug('type %s : %s' % (k, type(v)))
-        if odd:
-            html_content.append('<tr><th class="odd">' + k + '</th><td class="odd">' + v + '</td></tr>')
-            odd=False
-        else:
-            html_content.append('<tr><th class="even">' + k + '</th><td class="even">' + v + '</td></tr>')
-            odd=True
+        html_content.append(notification_object_var['host']['Host state'])
+    html_content.append('</b></td>')
+    html_content.append('</tr>')
 
     html_content.append('</table>')
 
-    # Get url and add it in footer
-    url = get_webui_url()
-    logging.debug('Grabbed WebUI URL : %s' % url)
+    # Second part with output of check
+    html_content.append('<table style="%s">' % css_table)
+    html_content.append('<tr style="height: 100px;">')
+    html_content.append('<td style="width: 20px;">')
+    html_content.append('</td>')
+    html_content.append('<td style="width: 120px;">')
+    html_content.append('<b>Message</b>')
+    html_content.append('</td>')
+    html_content.append('<td style="width: 510">')
+    if opts.notification_object == 'service':
+        html_content.append(notification_object_var['service']['Service output'])
+    html_content.append('</td>')
+    html_content.append('</tr>')
+    html_content.append('</table>')
 
-    if url != None:
-        html_content.append('More details on <a href="%s">WebUI </a>' % (url))
+
+    # separator with notification type
+    html_content.append('<table style="%s">' % css_table)
+    html_content.append('<tr>')
+    html_content.append('<td style="width: 200px;">')
+    html_content.append('<hr style="%s"/>' % css_separator)
+    html_content.append('</td>')
+    html_content.append('<td style="width: 250px;text-align: center;">')
+    html_content.append('<b>Notification type</b> ')
+    html_content.append(host_service_var['Notification type'])
+    html_content.append('</td>')
+    html_content.append('<td style="width: 200px;">')
+    html_content.append('<hr style="%s"/>' % css_separator)
+    html_content.append('</td>')
+    html_content.append('</tr>')
+    html_content.append('</table>')
+    html_content.append('<br/>')
+    html_content.append('<br/>')
+    html_content.append('<br/>')
+
+    # timeline
+    html_content.append('<table style="%s">' % css_table)
+    html_content.append('<tr>')
+    html_content.append('<td style="%swidth: 70px;"><b>' % css_point_title)
+    html_content.append(host_service_var['Date'])
+    html_content.append('</b></td>')
+    html_content.append('<td style="%swidth: 380px;">' % css_length)
+    if opts.notification_object == 'service':
+        html_content.append(notification_object_var['service']['Service state duration'])
+    else:
+        html_content.append(notification_object_var['host']['Host state duration'])
+    html_content.append('</td>')
+    html_content.append('<td style="">')
+    html_content.append('</td>')
+    html_content.append('</tr>')
+    html_content.append('</table>')
+
+    html_content.append('<table style="%s">' % css_table)
+    html_content.append('<tr>')
+    html_content.append('<td style="width: 20px;">')
+    html_content.append('</td>')
+    html_content.append('<td style="width: 20px;padding:0;margin:0;">')
+    html_content.append('<div style="%s"></div>' % css_point)
+    html_content.append('</td>')
+    html_content.append('<td style="width: 430px;padding:0;margin:0;">')
+    html_content.append('<hr style="%s"/>' % css_past)
+    html_content.append('</td>')
+    html_content.append('<td style="padding:0;margin:0;">')
+    html_content.append('<hr style="%s"/>' % css_future)
+    html_content.append('</td>')
+    html_content.append('</tr>')
+    html_content.append('</table>')
+
+    html_content.append('<br/><br/><br/>')
+
+    # footer
+    html_content.append('<hr style="%s"/>' % css_end)
+    html_content.append('<div style="%s">' % css_footer)
+    html_content.append('This email was generated by Alignak on ')
+    html_content.append(formatdate())
+    html_content.append('</div>')
+
+    html_content.append('</div>')
 
     html_content.append('</body></html>')
+
 
     # Make final string var to send and encode it to stdout encoding
     # avoiding decoding error.
@@ -333,6 +446,10 @@ if __name__ == "__main__":
                       help='Sender email address, default is system user: %s' % '@'.join((getpass.getuser(), socket.gethostname())))
     group_general.add_option('-S', '--SMTP', dest='smtp', default='localhost',
                       help='Target SMTP hostname. None for just a sendmail lanch. Default: localhost')
+    group_general.add_option('-L', '--LOGIN', dest='smtplogin', default='',
+                      help='Login for SMTP. None for not need login. Default: ')
+    group_general.add_option('-P', '--PASSWORD', dest='smtppassword', default='',
+                      help='Password for SMTP. None for not need password. Default: ')
     group_general.add_option('-p', '--prefix', dest='prefix', default='',
                       help='Mail subject prefix. Default is no prefix')
 
@@ -488,6 +605,11 @@ if __name__ == "__main__":
     try:
         smtp = smtplib.SMTP(opts.smtp)
         logging.debug('Send the mail')
+
+        logging.debug('Login')
+        if opts.smtplogin != '':
+            smtp.login(opts.smtplogin, opts.smtppassword)
+
         smtp.sendmail(get_user(), receivers, mail.as_string())
         logging.info("Mail sent successfuly")
         # Use SMTP or sendmail to send the mail ...
@@ -495,7 +617,7 @@ if __name__ == "__main__":
             logging.debug('Connecting to %s smtp server' % (opts.smtp))
             smtp = smtplib.SMTP(opts.smtp)
             logging.debug('Send the mail')
-            smtp.sendmail(opts.smtpfrom, receivers, mail.as_string())
+            smtp.sendmail(opts.sender, receivers, mail.as_string())
             logging.info("Mail sent successfuly")
         else:
             sendmail = '/usr/sbin/sendmail'
