@@ -1,1 +1,2 @@
+alignak_setup
 slacker
