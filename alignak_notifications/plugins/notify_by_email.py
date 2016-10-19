@@ -249,6 +249,18 @@ def generate_html(args):
     html_content.append('</td>')
     html_content.append('</tr>')
 
+    if args.perfdata:
+        html_content.append('<tr>')
+        html_content.append('<td style="width: 20px;">')
+        html_content.append('</td>')
+        html_content.append('<td style="width: 120px;">')
+        html_content.append('<b>Perfdata</b>')
+        html_content.append('</td>')
+        html_content.append('<td style="width: 510">')
+        html_content.append(args.perfdata)
+        html_content.append('</td>')
+        html_content.append('</tr>')
+
     if args.impact:
         html_content.append('<tr>')
         html_content.append('<td style="width: 20px;">')
