@@ -92,16 +92,20 @@ def parse_args():
                         help="Address (IP) of the host")
     parser.add_argument('-s', '--state', dest="state", required=True,
                         help="State of the host / service")
+    parser.add_argument('-ls', '--laststate', dest="laststate", required=True,
+                        help="Last state of the host / service")
     parser.add_argument('-o', '--output', dest="output", required=True,
                         help="Output, so the return text of the check")
     parser.add_argument('-dt', '--durationtime', dest="durationtime", type=int, default=0,
                         help="The durationtime of this state in seconds")
-    parser.add_argument('-db', '--datebegin', dest="datebegin", default='',
+    parser.add_argument('-db', '--datebegin', dest="datebegin", type=float, required=True,
                         help="Date + time the state become like now")
     parser.add_argument('-p', '--perfdata', dest="perfdata",
                         help="Perfdata returned by the check")
     parser.add_argument('-i', '--impact', dest="impact",
                         help="Impact")
+    parser.add_argument('-w', '--webui_url', dest="webui_url",
+                        help="URL of the webui")
     return parser.parse_args()
 
 
@@ -306,7 +310,7 @@ def generate_html(args):
     html_content.append('<table style="%s">' % css_table)
     html_content.append('<tr>')
     html_content.append('<td style="%swidth: 70px;"><b>' % css_point_title)
-    html_content.append(args.datebegin)
+    html_content.append(time.strftime("%a %d %b %H:%M:%S", time.gmtime(args.datebegin)))
     html_content.append('</b></td>')
     html_content.append('<td style="%swidth: %dpx;">' % (css_length, (line_width - 50)))
     html_content.append(time.strftime("%Hh%Mm%Ss", time.gmtime(args.durationtime)))
@@ -334,7 +338,20 @@ def generate_html(args):
     html_content.append('</tr>')
     html_content.append('</table>')
 
-    html_content.append('<div style="height: 120px;"></div>')
+    html_content.append('<table style="%sheight: 120px;">' % css_table)
+    html_content.append('<tr>')
+    html_content.append('<td style="width: 20px;">')
+    html_content.append('</td>')
+    html_content.append('<td">')
+    if args.webui_url:
+        html_content.append('To see information more information: <a href="%s" target="_blank">'
+                            '<img src="https://raw.githubusercontent.com/'
+                            'Alignak-monitoring-contrib/alignak-webui/develop/alignak_webui/'
+                            'htdocs/images/logo_webui_xxs.png"></a>' % args.webui_url)
+    html_content.append('</td>')
+    html_content.append('<td style="width: 20px;">')
+    html_content.append('</td>')
+    html_content.append('</table>')
 
     # footer
     html_content.append('<hr style="%s"/>' % css_end)
