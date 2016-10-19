@@ -341,7 +341,7 @@ def generate_html(args):
     html_content.append('</td>')
     html_content.append('<td">')
     if args.webui_url:
-        html_content.append('To see information more information: <a href="%s" target="_blank">'
+        html_content.append('To view more information: <a href="%s" target="_blank">'
                             '<img src="https://raw.githubusercontent.com/'
                             'Alignak-monitoring-contrib/alignak-webui/develop/alignak_webui/'
                             'htdocs/images/logo_webui_xxs.png"></a>' % args.webui_url)
