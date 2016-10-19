@@ -166,18 +166,8 @@ def generate_html(args):
     :rtype: str
     """
 
-    # default state color => OK / UP
-    state_color = '#27ae60'
-    if args.state in ['WARNING', 'UNREACHABLE']:
-        state_color = '#e67e22'
-    if args.state in ['CRITICAL', 'DOWN']:
-        state_color = '#e74c3c'
-    if args.state == 'UNKNOWN':
-        state_color = '#2980b9'
-    if args.state == 'ACKNOWLEDGE':
-        state_color = '#95a5a6'
-    if args.state == 'DOWNTIME':
-        state_color = '#9b59b6'
+    state_color = get_state_color(args.state)
+    last_state_color = get_state_color(args.laststate)
 
     html_content = ['<html>', '<head>',
                     '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">',
@@ -191,6 +181,8 @@ def generate_html(args):
     css_point = 'height: 20px;width: 20px;border-radius: 100%%;background-color: %s;' % state_color
     css_past = 'display: block;width: 100%%;height: 1px;border: 0;border-top: 2px solid %s;' \
                'margin: 0;padding: 0;' % state_color
+    css_laststate = 'display: block;width: 100%%;height: 1px;border: 0;border-top: 2px solid %s;' \
+                    'margin: 0;padding: 0;' % last_state_color
     css_future = 'display: block;width: 100%;height: 1px;border: 0;border-top: 2px dotted #ccc;' \
                  'margin: 1em 0;padding: 0;'
     css_point_title = 'text-align: center;font-size: 12px;color: #acacac;'
@@ -309,6 +301,8 @@ def generate_html(args):
     # timeline
     html_content.append('<table style="%s">' % css_table)
     html_content.append('<tr>')
+    html_content.append('<td style="width: 25px;">')
+    html_content.append('</td>')
     html_content.append('<td style="%swidth: 70px;"><b>' % css_point_title)
     html_content.append(time.strftime("%a %d %b %H:%M:%S", time.gmtime(args.datebegin)))
     html_content.append('</b></td>')
@@ -322,7 +316,10 @@ def generate_html(args):
 
     html_content.append('<table style="%s">' % css_table)
     html_content.append('<tr>')
-    html_content.append('<td style="width: 20px;">')
+    html_content.append('<td style="width: 10px;">')
+    html_content.append('</td>')
+    html_content.append('<td style="width: 40px;padding:0;margin:0;">')
+    html_content.append('<hr style="%s"/>' % css_laststate)
     html_content.append('</td>')
     html_content.append('<td style="width: 20px;padding:0;margin:0;">')
     html_content.append('<div style="%s"></div>' % css_point)
@@ -365,6 +362,30 @@ def generate_html(args):
 
     # Create a unique message
     return '\r\n'.join(html_content)
+
+
+def get_state_color(state):
+    """
+    Get right color for the state
+
+    :param state: the state
+    :type state: str
+    :return: the color related of the state
+    :rtype: str
+    """
+    # default state color => OK / UP
+    state_color = '#27ae60'
+    if state in ['WARNING', 'UNREACHABLE']:
+        state_color = '#e67e22'
+    if state in ['CRITICAL', 'DOWN']:
+        state_color = '#e74c3c'
+    if state == 'UNKNOWN':
+        state_color = '#2980b9'
+    if state == 'ACKNOWLEDGE':
+        state_color = '#95a5a6'
+    if state == 'DOWNTIME':
+        state_color = '#9b59b6'
+    return state_color
 
 
 def generate_text(args):
