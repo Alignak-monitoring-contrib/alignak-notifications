@@ -21,7 +21,6 @@
 This file is used to send an Alignak notification by email
 """
 
-import sys
 import argparse
 import smtplib
 import time
@@ -258,7 +257,7 @@ def generate_html(args):
         html_content.append('<b>Impact</b>')
         html_content.append('</td>')
         html_content.append('<td style="width: 510">')
-        for num in range(int(args.impact)):
+        for _ in range(int(args.impact)):
             html_content.append('&#9733;')
         html_content.append('</td>')
         html_content.append('</tr>')
@@ -335,14 +334,8 @@ def generate_html(args):
     html_content.append('</div>')
     html_content.append('</body></html>')
 
-    # Create a unique message and encode in right encodage
-    html_joined = '\r\n'.join(html_content)
-    try:
-        html_msg = html_joined.encode(sys.stdout.encoding)
-    except UnicodeDecodeError as e:
-        # logging.debug('Content is Unicode encoded.')
-        html_msg = html_joined.decode('utf-8').encode(sys.stdout.encoding)
-    return html_msg
+    # Create a unique message
+    return '\r\n'.join(html_content)
 
 
 def generate_text(args):
