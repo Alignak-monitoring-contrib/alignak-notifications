@@ -34,10 +34,17 @@ This pack embeds several scripts that can be used to send notifications from Ali
 - python script to send XMPP notifications
 
 
-Alignak configuration
-~~~~~~~~~~~~~~~~~~~~~
+Configuration
+~~~~~~~~~~~~~
 
-... TO BE COMPLETED ...
+Edit the */usr/local/etc/alignak/arbiter/packs/resource.d/notifications.cfg* file and configure
+the SMTP server address, user name and password.
+::
+
+    #-- SMTP server configuration
+    $SMTP_SERVER$=your_smtp_server_address
+    $SMTP_LOGIN$=your_smtp_login
+    $SMTP_PASSWORD$=your_smtp_password
 
 
 Bugs, issues and contributing
