@@ -47,6 +47,14 @@ the SMTP server address, user name and password.
     $SMTP_PASSWORD$=your_smtp_password
 
 
+**Note:** The python scripts assume that you have a direct `python` runnable ... if you need to use
+`python2.7` or something else to run python, you should::
+
+    cd /usr/local/bin
+    ln -s python2.7 python
+
+
+
 Bugs, issues and contributing
 -----------------------------
 
