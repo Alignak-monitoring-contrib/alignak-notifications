@@ -203,7 +203,7 @@ def generate_html(args):
     html_content.append('<img alt="Alignak" title="Alignak" width="120" '
                         'height="35" src="%s"/>' % args.urllogo)
     html_content.append('</td>')
-    html_content.append('<td style="width:50px;height: 30px;font-size: 18px;">')
+    html_content.append('<td style="width:100px;height: 30px;font-size: 18px;">')
     html_content.append('<b>Host</b>')
     html_content.append('</td>')
     html_content.append('<td style="font-size: 18px;">')
