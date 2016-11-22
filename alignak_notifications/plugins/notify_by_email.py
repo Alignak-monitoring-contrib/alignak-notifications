@@ -74,6 +74,8 @@ def parse_args():
     # SMTP parameters
     parser.add_argument('-S', '--SMTP', dest="smtp",
                         help='Define SMTP server address')
+    parser.add_argument('-ST', '--SMTPPORT', dest="smtp_port",
+                        help='Define SMTP server address')
     parser.add_argument('-SL', '--SMTPLOGIN', dest="smtp_login",
                         help='Define the login account for the SMTP server')
     parser.add_argument('-SP', '--SMTPPASSWORD', dest="smtp_password",
@@ -411,7 +413,8 @@ def send(msg, args):
     :return: None
     """
     if args.smtp:
-        smtp = smtplib.SMTP(args.smtp)
+        smtp = smtplib.SMTP(args.smtp, args.smtp_port)
+        smtp.starttls()
         if args.smtp_login:
             smtp.login(args.smtp_login, args.smtp_password)
         smtp.sendmail(args.From, args.To, msg.as_string())

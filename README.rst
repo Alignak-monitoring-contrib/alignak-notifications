@@ -15,7 +15,7 @@ To install the package from PyPI:
 
 
 From source files
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 To install the package from the source files:
 ::
    git clone https://github.com/Alignak-monitoring-contrib/alignak-notifications
@@ -38,13 +38,22 @@ Configuration
 ~~~~~~~~~~~~~
 
 Edit the */usr/local/etc/alignak/arbiter/packs/resource.d/notifications.cfg* file and configure
-the SMTP server address, user name and password.
+the SMTP server address, port, user name and password.
 ::
 
     #-- SMTP server configuration
     $SMTP_SERVER$=your_smtp_server_address
+    $SMTP_PORT$=25
     $SMTP_LOGIN$=your_smtp_login
     $SMTP_PASSWORD$=your_smtp_password
+
+
+**Note:** The python scripts assume that you have a direct `python` runnable ... if you need to use
+`python2.7` or something else to run python, you should::
+
+    cd /usr/local/bin
+    ln -s python2.7 python
+
 
 
 Bugs, issues and contributing
