@@ -17,6 +17,7 @@ From PyPI
 ~~~~~~~~~
 To install the package from PyPI:
 ::
+
    pip install alignak-notifications
 
 
@@ -24,6 +25,7 @@ From source files
 ~~~~~~~~~~~~~~~~~
 To install the package from the source files:
 ::
+
    git clone https://github.com/Alignak-monitoring-contrib/alignak-notifications
    cd alignak-notifications
    pip install -r requirements.txt
