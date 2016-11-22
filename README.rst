@@ -4,6 +4,12 @@ Alignak package for notifications
 Alignak package for notifications (simple mail, HTML mail, XMPP)
 
 
+Most recent release
+-------------------
+
+.. image:: https://badge.fury.io/py/alignak_notifications.svg
+    :target: https://badge.fury.io/py/alignak_notifications
+
 Installation
 ------------
 
