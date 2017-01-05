@@ -5,7 +5,7 @@ Alignak package for notifications
 
 
 .. image:: https://badge.fury.io/py/alignak_notifications.svg
-    :target: https://badge.fury.io/py/alignak-notifications
+    :target: https://badge.fury.io/py/alignak_notifications
     :alt: Most recent PyPi version
 
 .. image:: https://img.shields.io/badge/IRC-%23alignak-1e72ff.svg?style=flat
