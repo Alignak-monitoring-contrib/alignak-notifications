@@ -24,6 +24,7 @@ This file is used to send an Alignak notification by email
 import argparse
 import smtplib
 import time
+import traceback
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formatdate
@@ -37,7 +38,7 @@ def main():
     """
     args = parse_args()
     msg = prepare_notification(args)
-    send(msg, args)
+    return send(msg, args)
 
 
 def parse_args():
@@ -51,21 +52,22 @@ def parse_args():
     # General arguments
     parser.add_argument('-d', '--debug', dest="debug",
                         help='Debug mode to see all information')
-    parser.add_argument('-l', '--logfile', dest="logfile",
-                        help='Define file to put logs. By default log to stdout')
-    parser.add_argument('-tt', '--test', dest="test",
-                        help='Use a test notification (so with default values)')
+    # Currently unused options
+    # parser.add_argument('-l', '--logfile', dest="logfile",
+    #                     help='Define file to put logs. By default log to stdout')
+    # parser.add_argument('-tt', '--test', dest="test",
+    #                     help='Use a test notification (so with default values)')
 
     # Mail definition
     parser.add_argument('-fh', '--formathtml', action="store_true", dest="formathtml",
                         help="Use email in HTML format. By default, it's in text format")
     parser.add_argument('-fr', '--from', dest="From", required=True,
-                        help="Email of message author")
+                        help="Email of the mail author")
     parser.add_argument('-to', '--to', dest="To", required=True,
                         help="Recipients emails. At least one email address but you can specify a "
                              "comma-separated list of email addresses.")
     parser.add_argument('-pr', '--prefix', dest="prefix", default='',
-                        help="Define a prefix in the email object")
+                        help="Define a prefix in the email subject")
     parser.add_argument('-u', '--urllogo', dest="urllogo",
                         default='https://raw.githubusercontent.com/Alignak-monitoring-contrib/'
                                 'alignak-notifications/master/alignak.png',
@@ -97,17 +99,17 @@ def parse_args():
     parser.add_argument('-ls', '--laststate', dest="laststate", required=True,
                         help="Last state of the host / service")
     parser.add_argument('-o', '--output', dest="output", required=True,
-                        help="Output, so the return text of the check")
+                        help="Output of the check plugin")
     parser.add_argument('-dt', '--durationtime', dest="durationtime", type=int, default=0,
-                        help="The durationtime of this state in seconds")
+                        help="Duration of the provided state in seconds")
     parser.add_argument('-db', '--datebegin', dest="datebegin", type=float, required=True,
-                        help="Date + time the state become like now")
+                        help="Date + time of the beginning of the current state")
     parser.add_argument('-p', '--perfdata', dest="perfdata",
-                        help="Perfdata returned by the check")
+                        help="Performance data string returned by the check plugin")
     parser.add_argument('-i', '--impact', dest="impact",
                         help="Impact")
     parser.add_argument('-w', '--webui_url', dest="webui_url",
-                        help="URL of the webui")
+                        help="URL of the host/service in the Web User Interface")
     return parser.parse_args()
 
 
@@ -148,10 +150,10 @@ def subject(args):
     """
     title = []
     if args.type == 'host':
-        title.append('Host %s is %s' % (args.hostname, args.state))
+        title.append('%s - Host %s is %s' % (args.notificationtype, args.hostname, args.state))
     elif args.type == 'service':
-        title.append('Service %s of host %s is %s' % (args.servicename,
-                                                      args.hostname, args.state))
+        title.append('%s - Service %s of host %s is %s' % (args.notificationtype, args.servicename,
+                                                           args.hostname, args.state))
     if args.durationtime:
         title.append(' since %s' % (time.strftime("%Hh%Mm%Ss", time.gmtime(args.durationtime))))
 
@@ -413,13 +415,26 @@ def send(msg, args):
     :return: None
     """
     if args.smtp:
-        smtp = smtplib.SMTP(args.smtp, args.smtp_port)
-        smtp.starttls()
-        if args.smtp_login:
-            smtp.login(args.smtp_login, args.smtp_password)
-        smtp.sendmail(args.From, args.To, msg.as_string())
-        smtp.quit()
+        try:
+            smtp = smtplib.SMTP(args.smtp, args.smtp_port)
+            smtp.starttls()
+            if args.smtp_login:
+                smtp.login(args.smtp_login, args.smtp_password)
+            smtp.sendmail(args.From, args.To, msg.as_string())
+            smtp.quit()
+        except Exception as exp:
+            print("Exception: %s" % str(exp))
+            print(traceback.format_exc(exp))
+            # Return 3 as UNKNOWN
+            return 3
+
+        # Return 0 as OK
+        return 0
+
+    # Return 3 as UNKNOWN
+    return 3
 
 
 if __name__ == '__main__':
-    main()
+    exit_code = main()
+    exit(exit_code)
