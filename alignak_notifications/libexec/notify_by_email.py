@@ -93,7 +93,7 @@ def parse_args():
     parser.add_argument('-sn', '--servicename', dest="servicename",
                         help="Name of the service")
     parser.add_argument('-ha', '--hostaddress', dest="hostaddress",
-                        help="Address (IP) of the host")
+                        default='n/a', help="Address (IP) of the host")
     parser.add_argument('-s', '--state', dest="state", required=True,
                         help="State of the host / service")
     parser.add_argument('-ls', '--laststate', dest="laststate", required=True,
