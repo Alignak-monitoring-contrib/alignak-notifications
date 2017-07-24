@@ -20,6 +20,8 @@ Installation
 
 The installation of this package will copy some configuration files in the Alignak default configuration directory (eg. */usr/local/etc/alignak*). The copied files are located in the default sub-directory used for the packs (eg. *arbiter/packs*).
 
+Some JSON files
+
 From PyPI
 ~~~~~~~~~
 To install the package from PyPI:

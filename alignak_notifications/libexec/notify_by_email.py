@@ -152,8 +152,8 @@ def subject(args):
     if args.type == 'host':
         title.append('%s - Host %s is %s' % (args.notificationtype, args.hostname, args.state))
     elif args.type == 'service':
-        title.append('%s - Service %s of host %s is %s' % (args.notificationtype, args.servicename,
-                                                           args.hostname, args.state))
+        title.append('%s - Host %s , service %s is %s' % (args.notificationtype, args.hostname,
+                                                          args.servicename, args.state))
     if args.durationtime:
         title.append(' since %s' % (time.strftime("%Hh%Mm%Ss", time.gmtime(args.durationtime))))
 
