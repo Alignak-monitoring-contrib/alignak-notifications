@@ -51,6 +51,9 @@ This pack embeds several scripts that can be used to send notifications from Ali
 - python script to send HTML mail
 - python script to send XMPP notifications
 
+**Important:** The HTML mail script is using an Alignak logo image in the mail composition. The default file for this logo is the *alignak.png* file located in the main directory of the project repository. An alternative logo URL can be specified in the notification command parameters.
+
+
 
 Configuration
 ~~~~~~~~~~~~~
