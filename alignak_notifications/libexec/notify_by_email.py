@@ -88,6 +88,8 @@ def parse_args():
                         choices=['host', 'service'], help="Type of object")
     parser.add_argument('-nt', '--notificationtype', dest="notificationtype", required=True,
                         help="Type of the notification")
+    parser.add_argument('-nc', '--notificationcount', dest="notificationcount", type=int,
+                        help="Notification count")
     parser.add_argument('-hn', '--hostname', dest="hostname", required=True,
                         help="Name of the host")
     parser.add_argument('-sn', '--servicename', dest="servicename",
@@ -156,6 +158,9 @@ def subject(args):
                                                           args.servicename, args.state))
     if args.durationtime:
         title.append(' since %s' % (time.strftime("%Hh%Mm%Ss", time.gmtime(args.durationtime))))
+
+    if args.notificationcount and args.notificationcount > 1:
+        title.append(', notification #%s' % (args.notificationcount))
 
     return ''.join(title)
 
