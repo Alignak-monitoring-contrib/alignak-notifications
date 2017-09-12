@@ -88,6 +88,8 @@ def parse_args():
                         choices=['host', 'service'], help="Type of object")
     parser.add_argument('-nt', '--notificationtype', dest="notificationtype", required=True,
                         help="Type of the notification")
+    parser.add_argument('-nc', '--notificationcount', dest="notificationcount", type=int,
+                        help="Notification count")
     parser.add_argument('-hn', '--hostname', dest="hostname", required=True,
                         help="Name of the host")
     parser.add_argument('-sn', '--servicename', dest="servicename",
@@ -157,6 +159,9 @@ def subject(args):
     if args.durationtime:
         title.append(' since %s' % (time.strftime("%Hh%Mm%Ss", time.gmtime(args.durationtime))))
 
+    if args.notificationcount and args.notificationcount > 1:
+        title.append(', notification #%s' % (args.notificationcount))
+
     return ''.join(title)
 
 
@@ -208,7 +213,7 @@ def generate_html(args):
                         'height="35" src="%s"/>' % args.urllogo)
     html_content.append('</td>')
     html_content.append('<td style="width:100px;height: 30px;font-size: 18px;">')
-    html_content.append('<b>Host</b>')
+    html_content.append('<strong>Host</strong>')
     html_content.append('</td>')
     html_content.append('<td style="font-size: 18px;">')
     html_content.append(args.hostname)
@@ -218,7 +223,7 @@ def generate_html(args):
     html_content.append('<tr>')
     html_content.append('<td style="height: 30px;font-size: 18px;">')
     if args.type == 'service':
-        html_content.append('<b>Service</b>')
+        html_content.append('<strong>Service</strong>')
     html_content.append('</td>')
     html_content.append('<td style="font-size: 18px;">')
     if args.type == 'service':
@@ -228,9 +233,9 @@ def generate_html(args):
 
     # State
     html_content.append('<tr style="height: 30px">')
-    html_content.append('<td colspan="3" style="%s"><b>' % css_state)
+    html_content.append('<td colspan="3" style="%s"><strong>' % css_state)
     html_content.append(args.state)
-    html_content.append('</b></td>')
+    html_content.append('</strong></td>')
     html_content.append('</tr>')
 
     html_content.append('</table>')
@@ -242,7 +247,7 @@ def generate_html(args):
     html_content.append('<td style="width: 20px;">')
     html_content.append('</td>')
     html_content.append('<td style="width: 120px;">')
-    html_content.append('<b>Message</b>')
+    html_content.append('<strong>Message</strong>')
     html_content.append('</td>')
     html_content.append('<td style="width: 510">')
     html_content.append(args.output)
@@ -250,11 +255,16 @@ def generate_html(args):
     html_content.append('</tr>')
 
     if args.perfdata:
+        html_content.append('<tr style="height: 10px;">')
+        html_content.append('<td colspan=4>')
+        html_content.append('</td>')
+        html_content.append('</tr>')
+
         html_content.append('<tr>')
         html_content.append('<td style="width: 20px;">')
         html_content.append('</td>')
         html_content.append('<td style="width: 120px;">')
-        html_content.append('<b>Perfdata</b>')
+        html_content.append('<strong>Perfdata</strong>')
         html_content.append('</td>')
         html_content.append('<td style="width: 510">')
         html_content.append(args.perfdata)
@@ -262,11 +272,16 @@ def generate_html(args):
         html_content.append('</tr>')
 
     if args.impact:
+        html_content.append('<tr style="height: 10px;">')
+        html_content.append('<td colspan=4>')
+        html_content.append('</td>')
+        html_content.append('</tr>')
+        
         html_content.append('<tr>')
         html_content.append('<td style="width: 20px;">')
         html_content.append('</td>')
         html_content.append('<td style="width: 120px;">')
-        html_content.append('<b>Impact</b>')
+        html_content.append('<strong>Impact</strong>')
         html_content.append('</td>')
         html_content.append('<td style="width: 510">')
         for _ in range(int(args.impact)):
@@ -283,7 +298,7 @@ def generate_html(args):
     html_content.append('<hr style="%s"/>' % css_separator)
     html_content.append('</td>')
     html_content.append('<td style="width: 250px;text-align: center;">')
-    html_content.append('<b>Notification type</b> ')
+    html_content.append('<strong>Notification type</strong> ')
     html_content.append(args.notificationtype)
     html_content.append('</td>')
     html_content.append('<td style="width: 200px;">')
@@ -307,9 +322,9 @@ def generate_html(args):
     html_content.append('<tr>')
     html_content.append('<td style="width: 25px;">')
     html_content.append('</td>')
-    html_content.append('<td style="%swidth: 70px;"><b>' % css_point_title)
+    html_content.append('<td style="%swidth: 70px;"><strong>' % css_point_title)
     html_content.append(time.strftime("%a %d %b %H:%M:%S", time.gmtime(args.datebegin)))
-    html_content.append('</b></td>')
+    html_content.append('</strong></td>')
     html_content.append('<td style="%swidth: %dpx;">' % (css_length, (line_width - 50)))
     html_content.append(time.strftime("%Hh%Mm%Ss", time.gmtime(args.durationtime)))
     html_content.append('</td>')
@@ -401,7 +416,60 @@ def generate_text(args):
     :return: the message in TEXT format
     :rtype: str
     """
-    return 'todo'
+    text_content = []
+
+    # Head of the email
+    text_content.append("      _       __    _                          __      ")
+    text_content.append("     / \     [  |  (_)                        [  |  _  ")
+    text_content.append("    / _ \     | |  __   .--./) _ .--.   ,--.   | | / ] ")
+    text_content.append("   / ___ \    | | [  | / /'`\;[ `.-. | `'_\ :  | '' <  ")
+    text_content.append(" _/ /   \ \_  | |  | | \ \._// | | | | // | |, | |`\ \ ")
+    text_content.append("|____| |____|[___][___].',__` [___||__]\'-;__/[__|  \_]")
+    text_content.append("                      ( ( __))                         ")
+    text_content.append("")
+    text_content.append('Host: %s' % args.hostname)
+    if args.type == 'service':
+        text_content.append('Service: %s' % args.servicename)
+    text_content.append("")
+    text_content.append("###########################################################")
+    text_content.append('State: %s' % args.state)
+    text_content.append("###########################################################")
+    text_content.append("")
+    text_content.append('Message: %s' % args.output)
+    text_content.append("")
+    if args.perfdata:
+        text_content.append('Perfdata: %s' % args.perfdata)
+        text_content.append("")
+    if args.impact:
+        impact = ''
+        for _ in range(int(args.impact)):
+            impact += '★'
+        text_content.append('Impact: %s' % impact)
+        text_content.append("")
+
+    text_content.append("---------- Notification type %s ----------" % args.notificationtype)
+    text_content.append("")
+
+    # default, for durationtime < 3600 seconds
+    line_width = 150
+    if args.durationtime >= 86400:
+        line_width = 500
+    elif args.durationtime >= 3600:
+        line_width = 300
+
+    text_content.append('since date: %s' % time.strftime("%a %d %b %H:%M:%S", time.gmtime(args.datebegin)))
+    text_content.append('since: %s' % time.strftime("%Hh%Mm%Ss", time.gmtime(args.durationtime)))
+    text_content.append("")
+
+    if args.webui_url:
+        text_content.append('To view more information: %s' % args.webui_url)
+        text_content.append("")
+
+    # footer
+    text_content.append('This email was generated by Alignak on %s' % formatdate())
+
+    # Create a unique message
+    return '\r\n'.join(text_content)
 
 
 def send(msg, args):
