@@ -69,7 +69,7 @@ fi
 
 # Add commands
 echo "alignak-backend-cli $ARGUMENTS -f "$JSON_FILES" -t command -d commands.json add"
-/usr/local/bin/alignak-backend-cli $ARGUMENTS -f "$JSON_FILES" -t command -d commands.json add
+alignak-backend-cli $ARGUMENTS -f "$JSON_FILES" -t command -d commands.json add
 if [ $? -ne 0 ]; then
     echo "Failed to import file :("
     ERROR_FOUND=$((ERROR_FOUND + 1))
