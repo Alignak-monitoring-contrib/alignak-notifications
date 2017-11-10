@@ -40,7 +40,6 @@ def main():
     msg = prepare_notification(args)
     return send(msg, args)
 
-
 def parse_args():
     """
     Parse the arguments
@@ -132,11 +131,11 @@ def prepare_notification(args):
     msg['Date'] = formatdate()
 
     text_msg = generate_text(args)
-    part1 = MIMEText(text_msg, 'plain')
+    part1 = MIMEText(text_msg, 'plain', 'utf-8')
     msg.attach(part1)
     if args.formathtml:
         html_msg = generate_html(args)
-        part2 = MIMEText(html_msg, 'html')
+        part2 = MIMEText(html_msg, 'html', 'utf-8')
         msg.attach(part2)
     return msg
 
