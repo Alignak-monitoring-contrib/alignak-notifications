@@ -393,16 +393,19 @@ def get_state_color(state):
     """
     # default state color => OK / UP
     state_color = '#27ae60'
-    if state in ['WARNING', 'UNREACHABLE']:
+    state = state.upper()
+    if state == 'WARNING':
         state_color = '#e67e22'
     if state in ['CRITICAL', 'DOWN']:
         state_color = '#e74c3c'
     if state == 'UNKNOWN':
         state_color = '#2980b9'
-    if state == 'ACKNOWLEDGE':
-        state_color = '#95a5a6'
-    if state == 'DOWNTIME':
+    if state == 'UNREACHABLE':
         state_color = '#9b59b6'
+    if state == 'ACKNOWLEDGE':
+        state_color = '#f39c12'
+    if state == 'DOWNTIME':
+        state_color = '#f1c40f'
     return state_color
 
 
