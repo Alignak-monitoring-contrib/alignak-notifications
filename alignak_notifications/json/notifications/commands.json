@@ -22,5 +22,29 @@
         "poller_tag": "",
         "reactionner_tag": "",
         "timeout": 60
+    },
+    {
+        "_realm": "All",
+        "_sub_realm": true,
+        "alias": "Notify host by Slack",
+        "command_line": "$PLUGINSDIR$/notify_by_slack.py -t host -to $CONTACTNAME$ -nt $NOTIFICATIONTYPE$ -hn \"$HOSTNAME$\" -ha \"$HOSTADDRESS$\" -s $HOSTSTATE$ -ls $LASTHOSTSTATE$ -o \"$HOSTOUTPUT$\" -dt $HOSTDURATIONSEC$ -db \"$LASTHOSTSTATECHANGE$\" -i $HOSTBUSINESSIMPACT$ -p \"$HOSTPERFDATA$\"",
+        "enable_environment_macros": false,
+        "imported_from": "alignak-notifications",
+        "name": "notify-host-by-slack",
+        "poller_tag": "",
+        "reactionner_tag": "",
+        "timeout": 60
+    },
+    {
+        "_realm": "All",
+        "_sub_realm": true,
+        "alias": "Notify service by Slack",
+        "command_line": "$PLUGINSDIR$/notify_by_slack.py -t service -to $CONTACTNAME$ -nt $NOTIFICATIONTYPE$ -hn \"$HOSTNAME$\" -ha \"$HOSTADDRESS$\" -sn \"$SERVICEDESC$\" -s $SERVICESTATE$ -ls $LASTSERVICESTATE$ -o \"$SERVICEOUTPUT$\" -dt $SERVICEDURATIONSEC$ -db \"$LASTSERVICESTATECHANGE$\" -i $SERVICEBUSINESSIMPACT$  -p \"$SERVICEPERFDATA$\"",
+        "enable_environment_macros": false,
+        "imported_from": "alignak-notifications",
+        "name": "notify-service-by-slack",
+        "poller_tag": "",
+        "reactionner_tag": "",
+        "timeout": 60
     }
 ]

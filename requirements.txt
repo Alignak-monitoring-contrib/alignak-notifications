@@ -1,2 +1,2 @@
-# Nothing special, except slacker for notifications to slack
-slacker
+# Nothing special, except slack client for notifications to slack
+slackclient

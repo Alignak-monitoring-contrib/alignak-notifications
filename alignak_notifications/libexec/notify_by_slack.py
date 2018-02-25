@@ -1,344 +1,281 @@
 #!/usr/bin/env python
-# -*-coding:utf-8-*-
-# Copyright (C) 2016:
-#    Frédéric Mohier, frederic.mohier@gmail.com
+# -*- coding: utf-8 -*-
 #
-# This file is part of Alignak notifications.
+# Copyright (C) 2015-2018: Alignak contrib team, see AUTHORS.txt file for contributors
 #
-# Alignak notifications is free software: you can redistribute it and/or modify
+# This file is part of Alignak contrib projet.
+#
+# AlignakBackend is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Alignak notifications is distributed in the hope that it will be useful,
+# AlignakBackend is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU Affero General Public License for more details.
 #
 # You should have received a copy of the GNU Affero General Public License
-# along with (WebUI).  If not, see <http://www.gnu.org/licenses/>.
+# along with AlignakBackend.  If not, see <http://www.gnu.org/licenses/>.
+"""
+This file is used to send an Alignak notification by posting to a Slack channel
+"""
 
 import os
-import sys
-import socket
-import logging
-import getpass
-import urllib
-from optparse import OptionParser, OptionGroup
+import time
+import json
+import argparse
 
-# Slack API
-try:
-    from slacker import Slacker
-except Exception as e:
-    sys.exit("[ERROR] Missing Slacker module. You must install Slacker (pip install slacker) to use this script. (%s)" % e)
-
-# Global var
-image_dir = '/var/lib/shinken/share/images'
-customer_logo = 'customer_logo.jpg'
-webui_config_file = '/etc/shinken/modules/webui.cfg'
-
-webui2_config_file = '/etc/shinken/modules/webui2.cfg'
-webui2_image_dir = '/var/lib/shinken/share/photos'
+from slackclient import SlackClient
 
 
-# Set up root logging
-def setup_logging():
-    log_level = logging.INFO
-    if opts.debug:
-        log_level = logging.DEBUG
-    if opts.logfile:
-        logging.basicConfig(filename=opts.logfile, level=log_level, format='%(asctime)s:%(levelname)s: %(message)s')
-    else:
-        logging.basicConfig(level=log_level, format='%(asctime)s:%(levelname)s: %(message)s')
+def main():
+    """
+    Main function used to create and send Slack notification
 
+    :return: None
+    """
+    # Parse command line arguments
+    args = parse_args()
 
-# Get WebUI information
-def get_webui_logo():
-    company_logo = ''
+    if not args.slack_token:
+        args.slack_token = os.environ.get("ALIGNAK_SLACK_API_TOKEN", None)
+    if not args.slack_token:
+        print("Slack API token is not provided. Unable to post notifications.")
+        return 3
 
-    try:
-        webui_config_fh = open(webui2_config_file)
-    except IOError:
-        # WebUI2 not installed ...
-        full_logo_path = os.path.join(image_dir, customer_logo)
-        if os.path.isfile(full_logo_path):
-            return full_logo_path
+    sc = SlackClient(args.slack_token)
 
-    if opts.webui:
-        # WebUI2 installed
-        logging.debug('Webui2 is installed')
-        webui_config = webui_config_fh.readlines()
-        for line in webui_config:
-            if 'company_logo' in line:
-                company_logo = line.rsplit('company_logo')[1].strip()
-                company_logo += '.png'
-        logging.debug('Found company logo property: %s', company_logo)
-        if company_logo:
-            full_logo_path = os.path.join(webui2_image_dir, company_logo)
-            if os.path.isfile(full_logo_path):
-                logging.debug('Found company logo file: %s', full_logo_path)
-                return full_logo_path
-            else:
-                logging.debug('File %s does not exist!', full_logo_path)
-                return ''
-
-    return company_logo
-
-
-def get_webui_port():
-    port = ''
-
-    try:
-        webui_config_fh = open(webui2_config_file)
-    except IOError:
-        # WebUI2 not installed, try WebUI1
-        try:
-            webui_config_fh = open(webui_config_file)
-        except IOError:
-            # No WebUI
-            return ''
-        else:
-            # WebUI1 installed
-            logging.debug('Webui1 is installed')
-    else:
-        # WebUI2 installed
-        logging.debug('Webui2 is installed')
-
-    logging.debug('Webui file handler: %s' % (webui_config_fh))
-    webui_config = webui_config_fh.readlines()
-    # logging.debug('Webui config: %s' % (webui_config))
-    for line in webui_config:
-        if 'port' in line:
-            port = line.rsplit('port')[1].strip()
-    return port
-
-
-def get_webui_url():
-    if opts.webui:
-        hostname = socket.gethostname()
-        webui_port = get_webui_port()
-        if not webui_port:
-            return
-
-        if opts.webui_url:
-            url = '%s/%s/%s' % (opts.webui_url, opts.notification_object, urllib.quote(host_service_var['Hostname']))
-        else:
-            url = 'http://%s:%s/%s/%s' % (hostname, webui_port, opts.notification_object, urllib.quote(host_service_var['Hostname']))
-
-        # Append service if we notify a service object
-        if opts.notification_object == 'service':
-            url += '/%s' % (urllib.quote(notification_object_var['service']['Service description']))
-
-        return url
-
-
-if __name__ == "__main__":
-    parser = OptionParser(description='Send notifications to a slack (https://slack.com/) platform.')
-
-    group_debug = OptionGroup(parser, 'Debugging and test options', 'Useful to debug script when launched by the monitoring framework. Useful to just make a standalone test of script to see what it looks like.')
-    group_host_service = OptionGroup(parser, 'Host/service macros to specify concerned object.', 'Used to specify usual macros for notification. If not specified then the script will try to get them from environment variable. You need to enable_environment_macros in alignak.cfg if you want to use them. It is not recommended to use environment variables in large environment. You would better use option -n, -c and -o depending upon which object is concerned.')
-    group_webui = OptionGroup(parser, 'Web User Interface.', 'Used to include some Web User Interface information in the notifications.')
-    group_slack = OptionGroup(parser, 'Slack options.', 'Used to specify the behaviour of the slack interactions.')
-
-    # Debug and test options
-    group_debug.add_option('-d', '--debug', dest='debug', default=False,
-                      action='store_true', help='Set log level to debug (verbose mode)')
-    group_debug.add_option('-t', '--test', dest='test', default=False,
-                      action='store_true', help='Generate a test mail message')
-    group_debug.add_option('-l', '--logfile', dest='logfile',
-                      help='Specify a log file. Default: log to stdout.')
-
-    # Host/service options
-    group_host_service.add_option('-n', '--notification-object', dest='notification_object', type='choice', default='host',
-                      choices=['host', 'service'], help='Choose between host or service notification.')
-    group_host_service.add_option('-c', '--commonmacros', dest='commonmacros',
-                      help='Double comma separated macros in this order : "NOTIFICATIONTYPE$,,$HOSTNAME$,,$HOSTADDRESS$,,$LONGDATETIME$".')
-    group_host_service.add_option('-o', '--objectmacros', dest='objectmacros',
-                      help='Double comma separated object macros in this order : "$SERVICEDESC$,,$SERVICESTATE$,,$SERVICEOUTPUT$,,$SERVICEDURATION$" for a service object and "$HOSTSTATE$,,$HOSTDURATION$" for an host object')
-    # WebUI options
-    group_webui.add_option('-w', '--webui', dest='webui', default=False,
-                      action='store_true', help='Include link to the problem in WebUI.')
-    group_webui.add_option('-u', '--url', dest='webui_url',
-                      help='WebUI URL as http://my_webui:port/url')
-
-    # Slack options
-    group_slack.add_option('-K', '--key', dest='api_key',
-                      help='Provide Slack API key')
-    group_slack.add_option('-C', '--channel', dest='channel', default='alignak',
-                      help='Slack channel, default is alignak, else specify a public channel (eg. #public-channel)')
-    group_slack.add_option('-F', '--sender', dest='sender_id', default='@'.join((getpass.getuser(), socket.gethostname())),
-                      help='Sender user name, default is current user (username@hostname)')
-    group_slack.add_option('-I', '--sender-icon', dest='sender_icon', default=':exclamation:',
-                      help='Sender icon, default is default BOT icon. Icon may be an emoji (eg. :ghost:) or the URL of an image file')
-    group_slack.add_option('-T', '--title', dest='title', default=None,
-                      help='Message title. Default is None')
-
-    parser.add_option_group(group_debug)
-    parser.add_option_group(group_host_service)
-    parser.add_option_group(group_webui)
-    parser.add_option_group(group_slack)
-
-    (opts, args) = parser.parse_args()
-
-    setup_logging()
-
-    # Check and process arguments
-    #
-    # Retrieve and setup macros that make the message content
-    if not opts.commonmacros:
-        host_service_var = {
-            'Notification type': os.getenv('NAGIOS_NOTIFICATIONTYPE'),
-            'Hostname': os.getenv('NAGIOS_HOSTNAME'),
-            'Host address': os.getenv('NAGIOS_HOSTADDRESS'),
-            'Date': os.getenv('NAGIOS_LONGDATETIME')
+    attachments = [
+        {
+            "fallback": generate_text(args),
+            "color": get_state_color(args.state),
+            # "pretext": subject(args),
+            "author_name": args.author_name,
+            "author_link": args.author_url,
+            "author_icon": args.author_logo,
+            "title": subject(args),
+            # "title_link": "https://api.slack.com/",
+            "text": generate_markdown(args),
+            "footer": "Alignak notification",
+            "footer_icon": args.urllogo,
+            "ts": args.datebegin
         }
+    ]
+
+    print(args)
+    res = sc.api_call(
+        "chat.postMessage",
+        channel="#%s" % (args.To),
+        icon_emoji=':-1:',
+        as_user=True if args.From else False,
+        username=args.From,
+        attachments=json.dumps(attachments)
+    )
+    exit_code = 0
+    if not res["ok"]:
+        exit_code = 2
+        print("Slack notification error: %s" % res["error"])
     else:
-        macros = opts.commonmacros.split(',,')
-        host_service_var = {
-            'Notification type': macros[0],
-            'Hostname': macros[1],
-            'Host address': macros[2],
-            'Date': macros[3]
-        }
+        print("Slack message: %s" % res["message"])
+    return exit_code
 
-    if not opts.objectmacros:
-        notification_object_var = {
-            'service': {
-                'Service description': os.getenv('NAGIOS_SERVICEDESC'),
-                'Service state': os.getenv('NAGIOS_SERVICESTATE'),
-                'Service output': os.getenv('NAGIOS_SERVICEOUTPUT'),
-                'Service state duration': os.getenv('NAGIOS_SERVICEDURATION')
-            },
-            'host': {
-                'Host state': os.getenv('NAGIOS_HOSTSTATE'),
-                'Host state duration': os.getenv('NAGIOS_HOSTDURATION')
-            }
-        }
+def parse_args():
+    """
+    Parse the arguments
+
+    :return:
+    """
+    parser = argparse.ArgumentParser()
+
+    # General arguments
+    parser.add_argument('-fr', '--from', dest="From",
+                        help="Name of the author. Leave empty to post as a channel bot (default)")
+    parser.add_argument('-to', '--to', dest="To", required=True,
+                        help="Destination channel")
+
+    parser.add_argument('-pr', '--prefix', dest="prefix", default='',
+                        help="Define a prefix for the notification title")
+
+    parser.add_argument('-an', '--author_name', dest="author_name",
+                        help="Message author. Set this if you want to have an author "
+                             "information on top of the message")
+    parser.add_argument('-al', '--author_logo', dest="author_logo",
+                        default='https://raw.githubusercontent.com/Alignak-monitoring-contrib/'
+                                'alignak-notifications/master/alignak_16x16.png',
+                        help="URL of the author icon (used only if author name is set)")
+    parser.add_argument('-au', '--author_url', dest="author_url",
+                        help="URL of the message author Web site (used only if author name is set)")
+
+    parser.add_argument('-u', '--urllogo', dest="urllogo",
+                        default='https://raw.githubusercontent.com/Alignak-monitoring-contrib/'
+                                'alignak-notifications/master/alignak_16x16.png',
+                        help="URL of the author icon")
+
+    # Slack parameters
+    parser.add_argument('-S', '--slack_token', dest="slack_token",
+                        help='Define Slack API token')
+
+    # Alignak / monitoring information
+    parser.add_argument('-t', '--type', dest="type", required=True,
+                        choices=['host', 'service'], help="Type of object")
+    parser.add_argument('-nt', '--notificationtype', dest="notificationtype", required=True,
+                        help="Type of the notification")
+    parser.add_argument('-nc', '--notificationcount', dest="notificationcount", type=int,
+                        help="Notification count")
+    parser.add_argument('-hn', '--hostname', dest="hostname", required=True,
+                        help="Name of the concerned host")
+    parser.add_argument('-sn', '--servicename', dest="servicename",
+                        help="Name of the concerned service")
+    parser.add_argument('-ha', '--hostaddress', dest="hostaddress",
+                        default='n/a', help="Address (IP) of the host")
+    parser.add_argument('-s', '--state', dest="state", required=True,
+                        help="State of the host / service")
+    parser.add_argument('-ls', '--laststate', dest="laststate", required=True,
+                        help="Last state of the host / service")
+    parser.add_argument('-o', '--output', dest="output", required=True,
+                        help="Output of the check plugin")
+    parser.add_argument('-dt', '--durationtime', dest="durationtime", type=int, default=0,
+                        help="Duration of the provided state in seconds")
+    parser.add_argument('-db', '--datebegin', dest="datebegin", type=float, required=True,
+                        help="Date + time of the beginning of the current state")
+    parser.add_argument('-p', '--perfdata', dest="perfdata",
+                        help="Performance data string returned by the check plugin")
+    parser.add_argument('-i', '--impact', dest="impact",
+                        help="Impact")
+    parser.add_argument('-w', '--webui_url', dest="webui_url",
+                        help="URL of the host/service in the Web User Interface")
+    return parser.parse_args()
+
+
+def subject(args):
+    """
+    Create the subject of the notification
+
+    :param args:
+    :type args:
+    :return: subject of the notification
+    :rtype: str
+    """
+    title = []
+    if args.type == 'host':
+        title.append('%s - Host %s is %s' % (args.notificationtype, args.hostname, args.state))
+    elif args.type == 'service':
+        title.append('%s - Host %s , service %s is %s' % (args.notificationtype, args.hostname,
+                                                          args.servicename, args.state))
+    if args.durationtime:
+        title.append(' since %s' % (time.strftime("%Hh%Mm%Ss", time.gmtime(args.durationtime))))
+
+    if args.notificationcount and args.notificationcount > 1:
+        title.append(', notification #%s' % (args.notificationcount))
+
+    return args.prefix + ' ' + ''.join(title)
+
+
+def get_state_color(state):
+    """
+    Get right color for the state
+
+    :param state: the state
+    :type state: str
+    :return: the color related of the state
+    :rtype: str
+    """
+    # default state color => OK / UP
+    state_color = '#27ae60'
+    state = state.upper()
+    if state == 'WARNING':
+        state_color = '#e67e22'
+    if state in ['CRITICAL', 'DOWN']:
+        state_color = '#e74c3c'
+    if state == 'UNKNOWN':
+        state_color = '#2980b9'
+    if state == 'UNREACHABLE':
+        state_color = '#9b59b6'
+    if state == 'ACKNOWLEDGE':
+        state_color = '#f39c12'
+    if state == 'DOWNTIME':
+        state_color = '#f1c40f'
+    return state_color
+
+
+def generate_text(args):
+    """
+    Create the TEXT message for the notification
+
+    :param args:
+    :type args:
+    :return: the message in plain text format
+    :rtype: str
+    """
+    text_content = []
+
+    text_content.append("Notification: %s" % args.notificationtype)
+    if args.type == 'service':
+        text_content.append('Host: %s, service: %s is %s'
+                            % (args.hostname, args.servicename, args.state))
     else:
-        macros = opts.objectmacros.split(',,')
-        if opts.notification_object == 'service':
-            notification_object_var = {
-                'service': {
-                    'Service description': macros[0],
-                    'Service state': macros[1],
-                    'Service output': macros[2],
-                    'Service state duration': macros[3]
-                },
-                'host': {
-                    'Host state': '',
-                    'Host state duration': ''
-            }
+        text_content.append('Host: %s is %s'
+                            % (args.hostname, args.state))
+    text_content.append("-----")
+    text_content.append("")
+    text_content.append('Check output: %s' % args.output)
+    if args.perfdata:
+        text_content.append('Performance data: %s' % args.perfdata)
+    if args.impact:
+        impact = ''
+        for _ in range(int(args.impact)):
+            impact += '★'
+        text_content.append('Business impact: %s' % impact)
 
-            }
-        else:
-            notification_object_var = {
-                 'service': {
-                    'Service description': '',
-                    'Service state': '',
-                    'Service output': '',
-                    'Service state duration': ''
-                },'host': {
-                    'Host state': macros[0],
-                    'Host state duration': macros[1]
-                }
-            }
+    text_content.append('Since date: %s' % time.strftime("%a %d %b %H:%M:%S", time.gmtime(args.datebegin)))
+    text_content.append('Since: %s' % time.strftime("%Hh%Mm%Ss", time.gmtime(args.durationtime)))
 
-    # Load test values
-    if opts.test:
-        notification_object_var = {
-            'service': {
-                'Service description': 'Test_Service',
-                'Service state': 'TEST',
-                'Service output': 'Houston, we got a problem here! Oh, wait. No. It\'s just a test.',
-                'Service state duration': '00h 00min 10s'
-            },
-            'host': {
-                'Hostname': 'Test_Host',
-                'Host state': 'TEST',
-                'Host state duration': '00h 00h 20s'
-            }
-        }
+    if args.webui_url:
+        text_content.append('To view more information: %s' % args.webui_url)
 
-        host_service_var = {
-            'Hostname': 'alignak',
-            'Host address': '127.0.0.1',
-            'Notification type': 'TEST',
-            'Date': 'Now, test'
-        }
-    else:
-        host_service_var.update(notification_object_var[opts.notification_object])
+    # Create a unique message string
+    return '\r\n'.join(text_content)
 
-    logging.debug('notification_object_var: %s', notification_object_var)
-    logging.debug('host_service_var: %s', host_service_var)
 
-    if not host_service_var or not host_service_var['Hostname']:
-        logging.error('You must define at least some host/service information (-c) or specify test mode (-t)')
-        sys.exit(6)
+def generate_markdown(args):
+    """
+    Create the markdown message for the notification
 
-    # check required arguments
-    if not opts.api_key:
-        logging.error('You must define at least an API key using -K')
-        sys.exit(5)
+    :param args:
+    :type args:
+    :return: the message in markdown format
+    :rtype: str
+    """
+    text_content = []
 
-    logging.debug('Slack API key: %s', opts.api_key)
-    logging.debug('Slack channel: %s', opts.channel)
-    logging.debug('Slack user: %s, icon: %s', opts.sender_id, opts.sender_icon)
+    # if args.type == 'service':
+    #     text_content.append('Host: %s, service: %s is *%s*'
+    #                         % (args.hostname, args.servicename, args.state))
+    # else:
+    #     text_content.append('Host: %s is *%s*'
+    #                         % (args.hostname, args.state))
+    text_content.append("> Check output: %s" % args.output)
+    if args.perfdata:
+        text_content.append("> Performance data: %s" % args.perfdata)
+    if args.impact:
+        impact = ''
+        for _ in range(int(args.impact)):
+            impact += ':star:'
+        text_content.append("> Business impact: %s" % impact)
 
-    # Create text message
-    logging.debug('Create notification skeleton')
-    if opts.title:
-        txt_content = [opts.title]
-    else:
-        txt_content = []
+    text_content.append('Since date: %s' % time.strftime("%a %d %b %H:%M:%S", time.gmtime(args.datebegin)))
+    text_content.append('Since: %s' % time.strftime("%Hh%Mm%Ss", time.gmtime(args.durationtime)))
+    text_content.append("")
 
-    mail_subject = {
-        'host': 'Host %s alert for %s since %s' % (
-            notification_object_var['host']['Host state'],
-            host_service_var['Hostname'],
-            notification_object_var['host']['Host state duration']
-        ),
-        'service': '%s on Host: %s about service %s since %s' % (
-            notification_object_var['service']['Service state'],
-            host_service_var['Hostname'],
-            notification_object_var['service']['Service description'],
-            notification_object_var['service']['Service state duration']
-        )
-    }
+    if args.webui_url:
+        text_content.append('To view more information: %s' % args.webui_url)
+        text_content.append("")
 
-    txt_content.append(mail_subject[opts.notification_object])
+    # Create a unique message string
+    return '\r\n'.join(text_content)
 
-    # Get url and add it in footer
-    url = get_webui_url()
-    logging.debug('Grabbed Shinken URL : %s' % url)
-    if url:
-        txt_content.append('More details on <%s|Shinken WebUI>' % url)
 
-    message = '\r\n'.join(txt_content)
-    logging.debug('Notification: %s', message)
-
-    icon_url = 'http://lorempixel.com/48/48'
-    icon_emoji = None
-    if opts.sender_icon:
-        if opts.sender_icon[:1] != ':':
-            icon_url = opts.sender_icon
-        else:
-            icon_emoji = opts.sender_icon
-    logging.debug('Slack icon: %s / %s', icon_url, icon_emoji)
-
-    try:
-        # Slack connection
-        slack = Slacker(opts.api_key, timeout=10)
-
-        # Send a message to the channel
-        # Post as a bot
-        slack.chat.post_message(
-            '#%s' % opts.channel,
-            message,
-            username=opts.sender_id,
-            as_user=False,
-            icon_url=icon_url,
-            icon_emoji=icon_emoji
-        )
-    except Exception as e:
-        logging.error('Slack API problem: %s', e)
-        exit(1)
+if __name__ == '__main__':
+    exit_code = main()
+    exit(exit_code)
