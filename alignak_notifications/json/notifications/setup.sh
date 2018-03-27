@@ -42,18 +42,22 @@ case $i in
     shift
     ;;
     -b|--backend)
-    BACKEND="$i"
+    shift
+    BACKEND="$1"
     shift
     ;;
     -u|--username)
-    USERNAME="$i"
+    shift
+    USERNAME="$1"
     shift
     ;;
     -p|--password)
-    PASSWORD="$i"
+    shift
+    PASSWORD="$1"
     shift
     ;;
     -f|--files)
+    shift
     JSON_FILES="$i"
     shift
     ;;
@@ -62,9 +66,9 @@ done
 
 
 if [ "$VERBOSE_MODE" = "0" ]; then
-    ARGUMENTS="--quiet"
+    ARGUMENTS="--quiet -b $BACKEND -u $USERNAME -p $PASSWORD"
 else
-    ARGUMENTS="--verbose"
+    ARGUMENTS="--verbose -b $BACKEND -u $USERNAME -p $PASSWORD"
 fi
 
 # Add commands
