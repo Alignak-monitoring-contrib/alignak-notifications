@@ -24,7 +24,7 @@ __author__ = u"Frédéric MOHIER"
 __author_email__ = u"frederic.mohier@alignak.net"
 __copyright__ = u"(c) 2015-2018 - %s" % __author__
 __license__ = u"GNU Affero General Public License, version 3"
-__git_url__ = u"https://github.com/Alignak-monitoring-contrib/alignak-checks-wmi"
+__git_url__ = u"https://github.com/Alignak-monitoring-contrib/alignak-notifications"
 __doc_url__ = u"http://alignak-doc.readthedocs.io/en/latest"
 __description__ = u"Alignak notifications script pack"
 

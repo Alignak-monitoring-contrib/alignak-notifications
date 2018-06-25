@@ -22,7 +22,7 @@ except:
 
 # Overloading setup.py install_data
 class install_data(_install_data):
-    """Overload the default data installation"""
+    """Overload the default data installation."""
     def run(self):
         """Overload the default copy of files:"""
         # Setuptools install_data ...
