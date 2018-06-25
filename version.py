@@ -19,8 +19,8 @@ __pkg_name__ = u"alignak_notifications"
 __checks_type__ = u"notifications"
 
 # Application manifest
-__version__ = u"1.1.2"
-__author__ = u"Frédéric MOHIER"
+__version__ = u"1.1.3"
+__author__ = u"Frederic MOHIER"
 __author_email__ = u"frederic.mohier@alignak.net"
 __copyright__ = u"(c) 2015-2018 - %s" % __author__
 __license__ = u"GNU Affero General Public License, version 3"
