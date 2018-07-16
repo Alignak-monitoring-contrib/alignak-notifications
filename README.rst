@@ -18,11 +18,11 @@ Alignak package for notifications
 Installation
 ------------
 
-The installation of this package will copy some configuration files in the Alignak default configuration directory (eg. */usr/local/etc/alignak*). The copied files are located in the default sub-directory used for the packs (eg. *arbiter/packs*).
+The installation of this package will copy some configuration files in the Alignak default configuration directory (eg. */usr/local/share/alignak/etc*). The copied files are located in the default sub-directory used for the packs (eg. *arbiter/packs*).
 
-It will also copy some JSON files in the */usr/local/etc/alignak/backend-json* directory. These files are usable to import all the commands tinto the Alignak backend with the `alignak-backend-cli` script installed with the backend client library.
+It will also copy some JSON files in the */usr/local/share/alignak/backend-json* directory. These files are usable to import all the commands into the Alignak backend with the `alignak-backend-cli` script installed with the backend client library.
 
-You can update the sipped files to make the default commands suit your needs or use the default commands configuration that is defined to be as complete as possible.
+You can update the shipped files to make the default commands suit your needs or use the default commands configuration that is defined to be as complete as possible.
 
 
 **Note:** The python scripts assume that you have a direct `python` runnable ... if you need to use `python2.7` or something else to run python, you should::
@@ -75,9 +75,7 @@ The Slack channel that will receive the messages must ne named as the configured
 Configuration (mail notifications)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Edit the */usr/local/etc/alignak/arbiter/packs/resource.d/notifications.cfg* file and configure
-the SMTP server address, port, user name and password.
-::
+The mail notification scripts are using some Alignak macros. You can define these macros in the old Nagios legacy way inside a configuration file in Nagios format. then, edit the */usr/local/etc/alignak/arbiter/packs/resource.d/notifications.cfg* file and configure the SMTP server address, port, user name and password.::
 
     #-- SMTP server configuration
     $SMTP_SERVER$=your_smtp_server_address
@@ -85,7 +83,24 @@ the SMTP server address, port, user name and password.
     $SMTP_LOGIN$=your_smtp_login
     $SMTP_PASSWORD$=your_smtp_password
 
+    $MAIL_FROM$=alignak@monitoring
 
+The best Alignak-way of doing is to declare the same variables in an *alignak.d/notifications.ini* file. This file will be automrtically included by Alignak when it will parse its configuration.::
+
+    [pack.notifications]
+    ; This file/section contains the macros used by the Alignak mail notifications scripts
+
+    #-- SMTP server configuration
+    $SMTP_SERVER$=your_smtp_server_address
+    $SMTP_PORT$=25
+    $SMTP_LOGIN$=your_smtp_login
+    $SMTP_PASSWORD$=your_smtp_password
+
+    # -- Mail configuration
+    $MAIL_FROM$=alignak@monitoring
+
+
+.. note:: you can also replace the ``$`` with ``_``...
 
 Bugs, issues and contributing
 -----------------------------
